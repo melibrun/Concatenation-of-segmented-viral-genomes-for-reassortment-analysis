@@ -1,0 +1,3 @@
+regex==2022.10.31
+biopython==1.79
+shiny @ file:///home/conda/feedstock_root/build_artifacts/shiny_1662165243953/work
