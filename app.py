@@ -18,6 +18,7 @@ app_ui = ui.page_fluid(
     ui.h2("Merging segments"),
     ui.input_file("file1", "Choose a file(.gb) to upload:", multiple=True),
     ui.input_switch("organism", "Turn on if the name of your virus is contained in the descriptor 'organism'"),
+    ui.input_switch("only_proteint_coding", "Turn on if you want only protein-coding sequence"),
     ui.input_numeric("nb_of_segments", "Number of segments", 8),
     ui.input_numeric("nt", "Permissible difference", 200),
     ui.input_numeric("nb_segment1", "Segment 1", 2300),
@@ -110,17 +111,20 @@ def server(input, output, session):
             }
  
             organisms = change_letters_to_numbers(organisms)
-            organisms = cut_primers(organisms, nb_of_segments)
+            if input.only_proteint_coding:
+                organisms = cut_primers_for_all_segments(organisms)
+            else:
+                organisms = cut_primers(organisms, nb_of_segments)
             organisms_right_len = check_segments(organisms, nb_segments, nt)
             prep_without_dn = prep_delete_degenerate_nucleotides(organisms_right_len, nb_of_segments)
             without_dn = delete_degenerate_nucleotides(prep_without_dn)
 
             #create a file with mergening genome of virus
             with open("all_segments.fasta", "w") as f:
-                for key1, item in  without_dn.items():
+                for key1, item in without_dn.items():
                     strings.append(">{} \n{}\n".format(key1, item))
                 result1 = "".join(strings)
-                f.write(result1)
+                f.write(str(organisms_right_len))
             
        
         return text, len(without_dn)
@@ -185,6 +189,24 @@ def cut_primers(organisms,  nb_of_segments):
     return organisms
 
 
+
+def cut_primers_for_all_segments(organisms):
+
+    for dictt in organisms.values():
+        for number_of_segment, listt in dictt.items():
+
+                if len(listt) > 1:
+                    cut_start = listt[-2].split("..")[0]
+                    cut_start = int(cut_start) - 1
+                    cut_end = listt[-1].split("..")[-1]
+                    cut_end = int(cut_end)
+                    
+                    dictt[number_of_segment] = listt[0][cut_start:cut_end]
+
+                     
+    return organisms
+
+
 #check len of segments
 def check_segments(organisms, nb_segments, nt):
     seq2 = {}
@@ -202,7 +224,8 @@ def prep_delete_degenerate_nucleotides(seq2, nb_of_segments):
     prep_without_dn = {}
     for key, values in seq2.items():
         if len(values) == nb_of_segments:
-         prep_without_dn[key] = "".join(dict(sorted(values.items(), key=lambda x: x[0])).values()).replace("'","")
+         prep_without_dn[key] = "".join(str(dict(sorted(values.items(), key=lambda x: x[0])).values())).replace("'","").replace('dict_values([',"").replace('])',"").replace(',',"").replace(" ","")
+         #prep_without_dn[key] = dict(sorted(values.items(), key=lambda x: x[0])).values()
    
     return prep_without_dn
 
