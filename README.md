@@ -1,5 +1,5 @@
 # Concatenation of segmented viral genomes for reassortment analysis
-This [app](https://melibrun.shinyapps.io/combined_the_segments/) concatenate segmented viral genomes for reassortment analysis  
+This [app](https://melibrun.shinyapps.io/combined_the_segments/) concatenate segmented viral genomes for reassortment analysis.  
 - input format file -> genbank  
 - output format file -> fasta  
 
