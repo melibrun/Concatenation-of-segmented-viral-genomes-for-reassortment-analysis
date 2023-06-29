@@ -93,8 +93,9 @@ def server(input, output, session):
                                  organisms[fut_id] = {}
                     organisms[fut_id][number_of_segment] = [record.sequence]
                     if not_protein:
-                        organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[0])))))   
-                        organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[-1])))))    
+                        organisms[fut_id][number_of_segment].append(not_protein)
+                        #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[0])))))   
+                        #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[-1])))))    
                                     
             strings = []
             nb_of_segments = input.nb_of_segments()
@@ -111,6 +112,7 @@ def server(input, output, session):
             }
  
             organisms = change_letters_to_numbers(organisms)
+            organisms = choose_the_proteint_coding_sequence(organisms)
             if input.only_proteint_coding():
                 organisms = cut_primers_for_all_segments(organisms)
             else:
@@ -160,7 +162,37 @@ def change_letters_to_numbers(organisms):
                       seg_seq.pop(wrong_name)
            
     return organisms
+#we have to choose the longest segment
 
+def choose_the_proteint_coding_sequence(lib):
+    for name, content in lib.items():
+        for num, data in content.items():
+            if len(data[1]) > 1:
+                #print(data)
+                good = []
+                for item in data[1]:
+                    if "(" in item:
+                        good.extend(item.split("(")[1][:-1].split(","))
+                    else:
+                        good.append(item)
+
+                max = 0
+                best = ""
+                #print(good)
+                for item in good:
+                    t = item.split("..")
+                    #print(item)
+                    i = int(t[0].strip("<>"))
+                    j = int(t[1])
+                    if j - i > max:
+                        max = j-i
+                        best = item
+                data[1] = best.replace(">","").replace("<","")
+            else:
+                data[1] = data[1][0].replace(">","").replace("<","")
+
+    return lib
+                
 
 #sometimes we should cut nucleotides before first start-codon and after the last stop-codon
 def cut_primers(organisms,  nb_of_segments):
@@ -170,7 +202,7 @@ def cut_primers(organisms,  nb_of_segments):
 
             if number_of_segment == '1':
                 if len(listt) > 1:
-                    cut_start = listt[-2].split("..")[0]
+                    cut_start = listt[-1].split("..")[0]
                     #if cut_start not in ["A", "T", "G", "C", "N"]:
                     cut_start = int(cut_start) - 1
 
@@ -196,7 +228,7 @@ def cut_primers_for_all_segments(organisms):
         for number_of_segment, listt in dictt.items():
 
                 if len(listt) > 1:
-                    cut_start = listt[-2].split("..")[0]
+                    cut_start = listt[-1].split("..")[0]
                     cut_start = int(cut_start) - 1
                     cut_end = listt[-1].split("..")[-1]
                     cut_end = int(cut_end)
