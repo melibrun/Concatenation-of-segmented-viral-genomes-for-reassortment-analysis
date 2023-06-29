@@ -15,10 +15,10 @@ def ui_card(title, *args):
     )
 "\\wsl.localhost\Debian\home\sa\myapp"
 app_ui = ui.page_fluid(
-    ui.h2("Merging segments"),
+    ui.h2("Viral Segment Concatenator"),
     ui.input_file("file1", "Choose a file(.gb) to upload:", multiple=True),
-    ui.input_switch("organism", "Turn on if the name of your virus is contained in the descriptor 'organism'"),
-    ui.input_switch("only_proteint_coding", "Turn on if you want only protein-coding sequence"),
+    ui.input_switch("organism", "Name of your virus is contained in the field 'organism'"),
+    ui.input_switch("only_proteint_coding", "Only protein-coding sequence"),
     ui.input_numeric("nb_of_segments", "Number of segments", 8),
     ui.input_numeric("nt", "Permissible difference", 200),
     ui.input_numeric("nb_segment1", "Segment 1", 2300),
@@ -111,20 +111,20 @@ def server(input, output, session):
             }
  
             organisms = change_letters_to_numbers(organisms)
-            if input.only_proteint_coding:
+            if input.only_proteint_coding():
                 organisms = cut_primers_for_all_segments(organisms)
             else:
                 organisms = cut_primers(organisms, nb_of_segments)
-            organisms_right_len = check_segments(organisms, nb_segments, nt)
+            organisms_right_len, t = check_segments(organisms, nb_segments, nt)
             prep_without_dn = prep_delete_degenerate_nucleotides(organisms_right_len, nb_of_segments)
             without_dn = delete_degenerate_nucleotides(prep_without_dn)
 
             #create a file with mergening genome of virus
             with open("all_segments.fasta", "w") as f:
-                for key1, item in without_dn.items():
+                for key1, item in  without_dn.items():
                     strings.append(">{} \n{}\n".format(key1, item))
                 result1 = "".join(strings)
-                f.write(str(organisms_right_len))
+                f.write(result1)
             
        
         return text, len(without_dn)
@@ -210,14 +210,18 @@ def cut_primers_for_all_segments(organisms):
 #check len of segments
 def check_segments(organisms, nb_segments, nt):
     seq2 = {}
+    t = {}
     for name, dictt in organisms.items():
         seq2[name] = {}  
+        t[name] = {}
         for k, v in nb_segments.items():  
              if k in dictt.keys():
+                t[name][k] = len(dictt[k]) 
                 if (v - nt <= len(dictt[k]) <= v + nt):
                              seq2[name][k]=dictt[k]
+                             
 
-    return seq2                 
+    return seq2, t                 
 
 #here we bring to the form {id:record of all segments}
 def prep_delete_degenerate_nucleotides(seq2, nb_of_segments):
