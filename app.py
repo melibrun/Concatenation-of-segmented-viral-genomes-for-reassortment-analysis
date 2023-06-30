@@ -167,15 +167,16 @@ def change_letters_to_numbers(organisms):
 def choose_the_proteint_coding_sequence(lib):
     for name, content in lib.items():
         for num, data in content.items():
-            if len(data[1]) > 1:
-                #print(data)
+            #print(data)
+            if len(data) > 1:
+                
+                
                 good = []
                 for item in data[1]:
                     if "(" in item:
                         good.extend(item.split("(")[1][:-1].split(","))
                     else:
                         good.append(item)
-
                 max = 0
                 best = ""
                 #print(good)
@@ -183,14 +184,16 @@ def choose_the_proteint_coding_sequence(lib):
                     t = item.split("..")
                     #print(item)
                     i = int(t[0].strip("<>"))
-                    j = int(t[1])
+                    j = int(t[1].strip("<>"))
                     if j - i > max:
                         max = j-i
                         best = item
+                
                 data[1] = best.replace(">","").replace("<","")
+                
             else:
-                data[1] = data[1][0].replace(">","").replace("<","")
-
+                data = []
+    
     return lib
                 
 
