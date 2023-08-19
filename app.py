@@ -19,7 +19,9 @@ app_ui = ui.page_fluid(
     ui.input_file("file1", "Choose a file(.gb) to upload:", multiple=True),
     ui.input_switch("organism", "Name of your virus is contained in the field 'organism'"),
     ui.input_switch("only_proteint_coding", "Only protein-coding sequence"),
+    ui.input_text("subtype", "Name of organism", "H5N5"),
     ui.input_numeric("nb_of_segments", "Number of segments", 8),
+    ui.input_numeric("number_nn", "Number of characters (N) separating segments", 0),
     ui.input_numeric("nt", "Permissible difference", 200),
     ui.input_numeric("nb_segment1", "Segment 1", 2300),
     ui.input_numeric("nb_segment2", "Segment 2", 2300),
@@ -48,57 +50,63 @@ def server(input, output, session):
         if not file_infos:
             return
 
-        for file in file_infos:        
-            organisms = {}
-           
-            #parsing of genbank
-            with open(file["datapath"], "r") as handle:
-                
-                for record in GenBank.parse(handle):
-                    
-
-                    not_protein = []  
-                    future_id_all = [""]
-                    organism = ""
-                    if input.organism():
-                        organism = "/organism="
-                    number_of_segment = 'wrong'
-                    segments = [] 
-
-                    for feature in record.features:
-                            fut_id_var1 = ""
-                            fut_id_var2 = ""
-                            fut_id_var3 = ""
-                            if feature.key == "CDS":
-                                 not_protein.append(feature.location)
-                                 
-                            for qualifier in feature.qualifiers:  
+        for file in file_infos:
+            if file["datapath"].endswith('fasta'):
+                subtype = input.subtype()
+                organisms = read_fasta(file["datapath"], subtype)
+            else:
                         
-                                if qualifier.key == "/segment=":  
-                                    number_of_segment = qualifier.value.replace('"',"")
-                                    segments.append(number_of_segment)
-                                if qualifier.key == "/strain=":  
-                                     fut_id_var1 = qualifier.value
-                                     future_id_all.append(fut_id_var1)
-                                if qualifier.key ==  "/isolate=":
-                                     fut_id_var2 = qualifier.value
-                                     future_id_all.append(fut_id_var2)
-                                #may be useful for some case
-                                if qualifier.key == organism:
-                                     fut_id_var3 = qualifier.value
-                                     future_id_all.append(fut_id_var3) 
-                                fut_id = max(future_id_all, key = len)
-                            
-                            if fut_id not in organisms.keys():
-                                 organisms[fut_id] = {}
-                    organisms[fut_id][number_of_segment] = [record.sequence]
-                    if not_protein:
-                        organisms[fut_id][number_of_segment].append(not_protein)
-                        #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[0])))))   
-                        #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[-1])))))    
+                organisms = {}
+                
+                #parsing of genbank
+                with open(file["datapath"], "r") as handle:
+                    
+                    for record in GenBank.parse(handle):
+                        
+
+                        not_protein = []  
+                        future_id_all = [""]
+                        organism = ""
+                        if input.organism():
+                            organism = "/organism="
+                        number_of_segment = 'wrong'
+                        segments = [] 
+
+                        for feature in record.features:
+                                fut_id_var1 = ""
+                                fut_id_var2 = ""
+                                fut_id_var3 = ""
+                                if feature.key == "CDS":
+                                    not_protein.append(feature.location)
                                     
+                                for qualifier in feature.qualifiers:  
+                            
+                                    if qualifier.key == "/segment=":  
+                                        number_of_segment = qualifier.value.replace('"',"")
+                                        segments.append(number_of_segment)
+                                    if qualifier.key == "/strain=":  
+                                        fut_id_var1 = qualifier.value
+                                        future_id_all.append(fut_id_var1)
+                                    if qualifier.key ==  "/isolate=":
+                                        fut_id_var2 = qualifier.value
+                                        future_id_all.append(fut_id_var2)
+                                    #may be useful for some case
+                                    if qualifier.key == organism:
+                                        fut_id_var3 = qualifier.value
+                                        future_id_all.append(fut_id_var3) 
+                                    fut_id = max(future_id_all, key = len)
+                                
+                                if fut_id not in organisms.keys():
+                                    organisms[fut_id] = {}
+                        organisms[fut_id][number_of_segment] = [record.sequence]
+                        if not_protein:
+                            organisms[fut_id][number_of_segment].append(not_protein)
+                            #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[0])))))   
+                            #organisms[fut_id][number_of_segment].append('..'.join(list(filter(None, re.split(r'\D',not_protein[-1])))))    
+                                        
             strings = []
             nb_of_segments = input.nb_of_segments()
+            number_of_nn = input.number_nn()
             nt = input.nt()          
             nb_segments = {
                 '1':  input.nb_segment1(),
@@ -110,14 +118,14 @@ def server(input, output, session):
                 '7':  input.nb_segment7(),
                 '8':  input.nb_segment8(),
             }
- 
+            
             organisms = change_letters_to_numbers(organisms)
             organisms = choose_the_proteint_coding_sequence(organisms)
             if input.only_proteint_coding():
                 organisms = cut_primers_for_all_segments(organisms)
             else:
                 organisms = cut_primers(organisms, nb_of_segments)
-            organisms_right_len, t = check_segments(organisms, nb_segments, nt)
+            organisms_right_len, t = check_segments(organisms, nb_segments, nt, number_of_nn)
             prep_without_dn = prep_delete_degenerate_nucleotides(organisms_right_len, nb_of_segments)
             without_dn = delete_degenerate_nucleotides(prep_without_dn)
 
@@ -136,7 +144,58 @@ def server(input, output, session):
         
         return str(path)
     
-
+#read fasta
+def read_fasta(file, subtype):
+    segments = {
+    'PB2': "1",
+    'hemagglutinin': '4',
+    'neuraminidase': '6',
+    
+    "PB2": "2",
+    "PA": "3",
+    "HA": "4",
+    "NP": "5",
+    "NA": "6",
+    "M1": "7",
+    "NS1": "8"
+        
+    }
+    with open(file) as fasta:
+        organisms = {}
+        name =""
+        v_seg = 0
+        flag = False
+        for line in fasta:
+            if line.startswith('>'):
+                name = line.split(subtype)[0]
+                if len(name) >= 2 and '(' in name:
+                    name = name.split('(')[1]
+                
+            
+            
+                if "segment" in line:
+                    v_seg = line.split("segment")[1][1]
+                    if name not in organisms.keys():
+                        organisms[name] = {}
+                    organisms[name][v_seg] = ["",[""]]
+                    flag = True
+                elif "gene" in line:
+                    v_seg = line.split("gene")[0].split()[-1].strip("()")
+                    if v_seg in segments.keys():
+                        v_seg = segments[v_seg]
+                        if name not in organisms.keys():
+                            organisms[name] = {}
+                        organisms[name][v_seg] = ["",[""]]
+                        flag = True
+                    else:
+                        flag = False
+                else:
+                    flag = False
+            elif flag:
+                organisms[name][v_seg][0]+=line.strip()
+                organisms[name][v_seg][1][0] = f'1..{len(organisms[name][v_seg][0])}'
+            
+    return organisms
 
 
 #in some cases, segment names consist of letters, we need to change them to numbers
@@ -243,7 +302,7 @@ def cut_primers_for_all_segments(organisms):
 
 
 #check len of segments
-def check_segments(organisms, nb_segments, nt):
+def check_segments(organisms, nb_segments, nt, number_of_nn):
     seq2 = {}
     t = {}
     for name, dictt in organisms.items():
@@ -253,7 +312,7 @@ def check_segments(organisms, nb_segments, nt):
              if k in dictt.keys():
                 t[name][k] = len(dictt[k]) 
                 if (v - nt <= len(dictt[k]) <= v + nt):
-                             seq2[name][k]=dictt[k]
+                             seq2[name][k]=''.join(dictt[k]) + number_of_nn*"-"
                              
 
     return seq2, t                 

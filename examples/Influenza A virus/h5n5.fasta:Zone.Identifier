@@ -1,0 +1,4 @@
+[ZoneTransfer]
+ZoneId=3
+ReferrerUrl=https://www.ncbi.nlm.nih.gov/nuccore/?term=H5n5
+HostUrl=https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?tool=portal&save=file&log$=seqview&db=nuccore&report=fasta&query_key=2&filter=all&extrafeat=undefined&ncbi_phid=CE88C77C4E2035210000000003B302AA
