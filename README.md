@@ -3,7 +3,7 @@ This [app](https://melibrun.shinyapps.io/combined_the_segments/) concatenate seg
 - input format file -> genbank  
 - output format file -> fasta  
 
-In order to concatenate segments of your virus, you should upload a **gb** file format to the application. You should also set the required number of segments in the field (Number of segments). Next, you should set an acceptable spread of nucleotides in the field (Permissible difference). After that, you should specify the number of nucleotides in each of the segments. Be careful.  
+In order to concatenate segments of your virus, you should upload a **gb** or **fasta** file format to the application. You should also set the required number of segments in the field (Number of segments). Next, you should set an acceptable spread of nucleotides in the field (Permissible difference). After that, you should specify the number of nucleotides in each of the segments. Be careful.  
 
 If you want to concatenate segments of a virus that does not consist of 8 segments, you need to enter the number of your segments in the field (Number of segments) and change the length of the segments according to the subtype of the virus. The remaining segments can be left untouched.  
 

@@ -16,7 +16,7 @@ def ui_card(title, *args):
 "\\wsl.localhost\Debian\home\sa\myapp"
 app_ui = ui.page_fluid(
     ui.h2("Viral Segment Concatenator"),
-    ui.input_file("file1", "Choose a file(.gb) to upload:", multiple=True),
+    ui.input_file("file1", "Choose a file(.gb or fasta) to upload:", multiple=True),
     ui.input_switch("organism", "Name of your virus is contained in the field 'organism'"),
     ui.input_switch("only_proteint_coding", "Only protein-coding sequence"),
     ui.input_text("subtype", "Name of organism", "H5N5"),
