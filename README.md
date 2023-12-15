@@ -1,15 +1,13 @@
-# Concatenation of segmented viral genomes for reassortment analysis
-This [app](https://melibrun.shinyapps.io/combined_the_segments/) concatenate segmented viral genomes for reassortment analysis.  
-- input format file -> genbank  
-- output format file -> fasta  
+# Description of the VSC
 
-In order to concatenate segments of your virus, you should upload a **gb** or **fasta** file format to the application. You should also set the required number of segments in the field (Number of segments). Next, you should set an acceptable spread of nucleotides in the field (Permissible difference). After that, you should specify the number of nucleotides in each of the segments. Be careful.  
+[VSC](https://melibrun.shinyapps.io/combined_the_segments/)  enables the automatic concatenation of sequences written in *GenBank* or *FASTA* format. Please note that for correct analysis of FASTA sequences, the header should be written as follows: “>((strain name(subtype))_segment_segment-number” (e.g. ">(A/waterfowl/Korea/S005/2014(H5N5))_segment_3" ). Sample files in Genbank and FASTA format can be found at https://github.com/melibrun/Concatenation-of-segmented-viral-genomes-for-reassortment-analysis/tree/main/examples.   
 
-If you want to concatenate segments of a virus that does not consist of 8 segments, you need to enter the number of your segments in the field (Number of segments) and change the length of the segments according to the subtype of the virus. The remaining segments can be left untouched.  
+To visualise the separation between the segments, an option has also been added to add a certain number of “N” symbols.  
 
-If you want to have only protein-coding sequences in the final file, switch "Turn on if you want only protein-coding sequence".  
+The default settings of the application are set for the influenza A viruses, whose genome consists of eight segments of the specified length. If the virus of interest has a different number of segments with a different length, this should be specified in the corresponding fields.  
 
-If your virus has a suspiciously small number of sequences, try switching the "Turn on if the name of your virus is contained in the descriptor 'organization'" field. Perhaps the name of your virus is hidden in the "organism" field.
+The “Permissible difference” fields indicate the range of segment length that will be treated as a complete segment sequence. For example, if “Permissible difference” is 200 and the length of segment 1 is 2300, sequences with a length between 2100 and 2500 will be treated as a complete segment length.  
 
+Using the annotated genebank file allows the use of additional options. For example, only protein-coding regions can be concatenated if the corresponding button has been selected.  
 
 
